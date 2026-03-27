@@ -456,9 +456,13 @@
             state.currentPage = data.currentPage || page;
 
             if (append) {
+              console.log("append", append);
               state.resultsCache = [...state.resultsCache, ...data.data];
+              console.log("state.resultsCache", state.resultsCache);
             } else {
+              console.log("else part");
               state.resultsCache = data.data;
+              console.log("state.resultsCache", state.resultsCache);
             }
 
             // Only render if we should show results
@@ -543,7 +547,6 @@
        */
       async handleItemSelection(item) {
         const { isProductField, selectedValues } = state;
-        debugger;
         // console.log('state', state);
         const value = isProductField ? item.sku : item.code;
         const selectionLimit = await utils.getSelectionLimit();
@@ -569,11 +572,11 @@
           elements.searchInput.value = "";
           elements.resultsList.innerHTML = "";
           elements.resultsList.classList.remove("has-results");
+          state.shouldShowResults = false;
           return;
         }
 
         selectedValues.push(value);
-        console.log("selectedValues", selectedValues);
 
         if (isProductField) {
           state.latestProductsCache.push(item);
