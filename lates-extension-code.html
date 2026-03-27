@@ -175,6 +175,7 @@
       DEFAULT_LIMIT: 100,
       SCROLL_THRESHOLD: 10,
       MAX_LIST_HEIGHT: 3,
+      STATUS_MESSAGE_TIMEOUT_MS: 3000,
     };
 
     // ============================================
@@ -200,6 +201,7 @@
       lastQuery: "",
       resultsCache: [],
       searchDebounceTimer: null,
+      statusMessageTimer: null,
       abortController: null,
       shouldShowResults: true,
     };
@@ -291,6 +293,48 @@
       updateHeight() {
         if (state.extension) {
           state.extension.window.updateHeight();
+        }
+      },
+
+      /**
+       * Clears status message after a delay
+       * @param {number} delay - Delay in milliseconds
+       */
+      clearStatusMessageAfterDelay(delay = CONSTANTS.STATUS_MESSAGE_TIMEOUT_MS) {
+        clearTimeout(state.statusMessageTimer);
+        state.statusMessageTimer = setTimeout(() => {
+          elements.statusMessage.innerText = "";
+          utils.updateHeight();
+        }, delay);
+      },
+
+      /**
+       * Closes dropdown and resets search-related state
+       */
+      closeSearchDropdown() {
+        // Prevent any pending debounced request from running
+        clearTimeout(state.searchDebounceTimer);
+
+        // Cancel any in-flight API request
+        if (state.abortController) {
+          state.abortController.abort();
+          state.abortController = null;
+        }
+
+        state.shouldShowResults = false;
+        elements.searchInput.value = "";
+        elements.resultsList.innerHTML = "";
+        elements.resultsList.classList.remove("has-results");
+        elements.resultsList.scrollTop = 0;
+
+        state.resultsCache = [];
+        state.currentPage = 1;
+        state.totalResults = 0;
+        state.lastQuery = "";
+
+        if (state.isLoading) {
+          state.isLoading = false;
+          elements.loader.style.display = "none";
         }
       },
 
@@ -554,25 +598,18 @@
 
         if (selectedValues.includes(value)) {
           // Already selected - cancel requests and close the list
-          if (state.abortController) {
-            state.abortController.abort();
-            state.abortController = null;
-          }
-          state.shouldShowResults = false;
-          elements.searchInput.value = "";
-          elements.resultsList.innerHTML = "";
-          elements.resultsList.classList.remove("has-results");
-          elements.resultsList.scrollTop = 0;
+          elements.statusMessage.innerText = "item already exists";
+          utils.updateHeight();
+          utils.clearStatusMessageAfterDelay();
+          utils.closeSearchDropdown();
           return;
         }
         // Check selection limit for products (only if limit is not null/unlimited)
         if (isProductField && selectionLimit !== null && selectedValues.length >= selectionLimit) {
           elements.statusMessage.innerText = `You can only select up to ${selectionLimit} products.`;
           utils.updateHeight();
-          elements.searchInput.value = "";
-          elements.resultsList.innerHTML = "";
-          elements.resultsList.classList.remove("has-results");
-          state.shouldShowResults = false;
+          utils.clearStatusMessageAfterDelay();
+          utils.closeSearchDropdown();
           return;
         }
 
@@ -598,34 +635,7 @@
           }
         }
 
-        // Cancel any pending API requests
-        if (state.abortController) {
-          state.abortController.abort();
-          state.abortController = null;
-        }
-
-        // Set flag to prevent results from showing
-        state.shouldShowResults = false;
-
-        // Clear search and close list immediately
-        elements.searchInput.value = "";
-        elements.resultsList.innerHTML = "";
-        elements.resultsList.classList.remove("has-results");
-
-        // Reset scroll position
-        elements.resultsList.scrollTop = 0;
-
-        // Clear results cache and reset pagination
-        state.resultsCache = [];
-        state.currentPage = 1;
-        state.totalResults = 0;
-        state.lastQuery = "";
-
-        // Clear any pending API calls
-        if (state.isLoading) {
-          state.isLoading = false;
-          elements.loader.style.display = "none";
-        }
+        utils.closeSearchDropdown();
       },
 
       /**
