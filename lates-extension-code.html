@@ -6,159 +6,29 @@
   <title>Dynamic Code Picker</title>
   <script src="https://unpkg.com/@contentstack/ui-extensions-sdk@2.2.0/dist/ui-extension-sdk.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-    }
-
-    .search-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 5px;
-      min-height: 40px;
-      cursor: text;
-    }
-
-    .search-wrapper input {
-      border: none;
-      outline: none;
-      flex: 1;
-      padding: 6px;
-      min-width: 150px;
-      font-size: 14px;
-    }
-
-    #chips-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
-      min-height: 20px;
-    }
-
-    .tag {
-      background: #eef6ff;
-      border: 1px solid #3399ff;
-      border-radius: 16px;
-      padding: 4px 8px;
-      display: inline-flex;
-      align-items: center;
-      font-size: 13px;
-    }
-
-    .remove {
-      margin-left: 6px;
-      cursor: pointer;
-      color: red;
-      font-weight: bold;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 4px;
-      max-height: calc(3 * 34px);
-      overflow-y: auto;
-      border-radius: 4px;
-      min-height: 0;
-    }
-
-    ul.has-results {
-      border: 1px solid #ddd;
-    }
-
-    li {
-      padding: 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-
-    li:last-child {
-      border-bottom: none;
-    }
-
-    li:hover {
-      background: #f0f0f0;
-    }
-
-    .status-message {
-      color: #d9534f;
-      margin-top: 10px;
-      white-space: pre-line;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th,
-    td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f2f2f2;
-    }
-
-    .table-header-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-
-    .refresh-button {
-      background: #3399ff;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-      padding: 6px 12px;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background-color 0.2s;
-    }
-
-    .refresh-button:hover {
-      background: #2980b9;
-    }
-
-    .refresh-button:active {
-      background: #1f5f8b;
-    }
-
-    .refresh-icon {
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-    }
-
-    tr.unavailable {
-      background-color: #fff3f3;
-    }
-
-    #loader {
-      text-align: center;
-      margin: 6px;
-      display: none;
-    }
+    body { font-family: Arial, sans-serif; padding: 10px; }
+    .search-wrapper { display: flex; flex-wrap: wrap; align-items: center; border: 1px solid #ddd; border-radius: 4px; padding: 5px; min-height: 40px; cursor: text; }
+    .search-wrapper input { border: none; outline: none; flex: 1; padding: 6px; min-width: 150px; font-size: 14px; }
+    #chips-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 20px; }
+    .tag { background: #eef6ff; border: 1px solid #3399ff; border-radius: 16px; padding: 4px 8px; display: inline-flex; align-items: center; font-size: 13px; }
+    .remove { margin-left: 6px; cursor: pointer; color: red; font-weight: bold; }
+    ul { list-style: none; padding: 0; margin-top: 4px; max-height: 150px; overflow-y: auto; border-radius: 4px; }
+    ul.has-results { border: 1px solid #ddd; }
+    li { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; }
+    li:hover { background: #f0f0f0; }
+    .status-message { color: #d9534f; margin-top: 10px; white-space: pre-line; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .table-header-wrapper { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .refresh-button { background: #3399ff; border: none; border-radius: 4px; color: white; cursor: pointer; padding: 6px 12px; font-size: 14px; }
+    #loader { text-align: center; margin: 6px; display: none; }
   </style>
 </head>
-
 <body>
   <div class="search-wrapper" id="search-wrapper">
     <input type="text" id="search" placeholder="Search..." />
   </div>
-
   <div id="chips-container"></div>
   <ul id="results"></ul>
   <div id="loader"></div>
@@ -166,49 +36,33 @@
   <div id="selected-table"></div>
 
   <script>
-    // ============================================
-    // CONSTANTS & CONFIGURATION
-    // ============================================
     const CONSTANTS = {
       SEARCH_DEBOUNCE_MS: 300,
       DEFAULT_PER_PAGE: 10,
-      DEFAULT_LIMIT: 100,
-      SCROLL_THRESHOLD: 10,
-      MAX_LIST_HEIGHT: 3,
-      STATUS_MESSAGE_TIMEOUT_MS: 3000,
+      SCROLL_THRESHOLD: 10
     };
 
-    // ============================================
-    // STATE MANAGEMENT
-    // ============================================
     const state = {
       extension: null,
       config: {},
-      extConfig: {},
       isProductField: false,
+      isCustomerField: false,
       isLocationField: false,
-      categoryField: "",
-      managementToken: "",
       apiUrl: "",
       encodedAuth: "",
       selectedValues: [],
       latestProductsCache: [],
-      categoryObjectsCache: [],
+      resultsCache: [],
+      isLoading: false,
+      lastQuery: "",
       currentPage: 1,
       totalResults: 0,
       perPage: CONSTANTS.DEFAULT_PER_PAGE,
-      isLoading: false,
-      lastQuery: "",
-      resultsCache: [],
       searchDebounceTimer: null,
-      statusMessageTimer: null,
       abortController: null,
-      shouldShowResults: true,
+      shouldShowResults: true
     };
 
-    // ============================================
-    // DOM ELEMENTS
-    // ============================================
     const elements = {
       statusMessage: null,
       searchInput: null,
@@ -216,807 +70,242 @@
       chipsContainer: null,
       selectedTableDiv: null,
       searchWrapper: null,
-      loader: null,
+      loader: null
     };
 
-    // ============================================
-    // UTILITY FUNCTIONS
-    // ============================================
     const utils = {
-      /**
-       * Normalizes a value to an array
-       * @param {*} val - Value to normalize
-       * @returns {Array} Normalized array
-       */
       normalizeToArray(val) {
         if (!val) return [];
-        if (Array.isArray(val)) return val;
-        if (typeof val === "string") return [val];
-        return [];
+        return Array.isArray(val) ? val : [val];
       },
-
-      /**
-       * Generates authentication token with current date
-       * @param {string} token - Management token
-       * @returns {string} Base64 encoded auth token
-       */
       generateAuthToken(token) {
         const today = new Date();
-        const day = String(today.getUTCDate()).padStart(2, "0");
-        const month = String(today.getUTCMonth() + 1).padStart(2, "0");
-        const year = String(today.getUTCFullYear());
-        const dateStr = `${day}${month}${year}`;
+        const dateStr = `${String(today.getUTCDate()).padStart(2, "0")}${String(today.getUTCMonth() + 1).padStart(2, "0")}${today.getUTCFullYear()}`;
         return btoa(`${token}${dateStr}`);
       },
-
-      /**
-       * Gets selected location from entry
-       * @returns {Array|null} Location array or null
-       */
-      getSelectedLocation() {
-        try {
-          const { extension } = state;
-          // Try method 2: schema-based approach
-
-          // console.log("extension.entry", extension.entry);
-          // console.log("locationValue", extension.entry._changedData);
-          const schema = extension?.entry?.content_type?.schema || [];
-
-          const locationField = schema.find((field) => field.uid === "location");
-          if (!locationField) return null;
-          console.log("locationField is not null");
-
-          const locationValue = extension?.entry?._changedData?.location || [];
-          return locationValue.length > 0 ? locationValue : null;
-          // Try method 1: getData function
-          if (typeof extension?.entry?.getData === "function") {
-            const entryData = extension.entry.getData();
-            if (
-              entryData &&
-              Object.prototype.hasOwnProperty.call(entryData, "location")
-            ) {
-              const arr = utils.normalizeToArray(entryData.location);
-              return arr.length > 0 ? arr : null;
-            }
-          }
-
-
-        } catch (err) {
-          console.error("❌ Error in getSelectedLocation:", err);
-          return null;
-        }
-      },
-
-      /**
-       * Updates extension window height
-       */
       updateHeight() {
-        if (state.extension) {
-          state.extension.window.updateHeight();
-        }
+        if (state.extension) state.extension.window.updateHeight();
       },
-
-      /**
-       * Clears status message after a delay
-       * @param {number} delay - Delay in milliseconds
-       */
-      clearStatusMessageAfterDelay(delay = CONSTANTS.STATUS_MESSAGE_TIMEOUT_MS) {
-        clearTimeout(state.statusMessageTimer);
-        state.statusMessageTimer = setTimeout(() => {
-          elements.statusMessage.innerText = "";
-          utils.updateHeight();
-        }, delay);
-      },
-
-      /**
-       * Closes dropdown and resets search-related state
-       */
       closeSearchDropdown() {
-        // Prevent any pending debounced request from running
         clearTimeout(state.searchDebounceTimer);
-
-        // Cancel any in-flight API request
-        if (state.abortController) {
-          state.abortController.abort();
-          state.abortController = null;
-        }
-
+        if (state.abortController) state.abortController.abort();
         state.shouldShowResults = false;
         elements.searchInput.value = "";
         elements.resultsList.innerHTML = "";
         elements.resultsList.classList.remove("has-results");
-        elements.resultsList.scrollTop = 0;
-
-        state.resultsCache = [];
         state.currentPage = 1;
-        state.totalResults = 0;
-        state.lastQuery = "";
-
-        if (state.isLoading) {
-          state.isLoading = false;
-          elements.loader.style.display = "none";
-        }
       },
-
-      /**
-* Gets the selection limit based on product type enum
-* enum = 2  → no limit (null)
-* otherwise → config.limit or DEFAULT_LIMIT
-*
-* @returns {Promise<number|null>}
-*/
-      async getSelectionLimit() {
+      getSelectedLocation() {
         try {
-          const { config, extension } = state;
-
-          const productTypeField = extension?.entry?.getField("product_type");
-          if (!productTypeField) {
-            return config.limit ?? CONSTANTS.DEFAULT_LIMIT;
-          }
-
-          const productTypeValue = extension?.entry?._changedData?.product_type;
-
-          // enum = 2 → unlimited
-          if (productTypeValue === 2) {
-            return null;
-          }
-
-          return config.limit
-            ? Number(config.limit)
-            : CONSTANTS.DEFAULT_LIMIT;
-        } catch (err) {
-          console.error("❌ Error in getSelectedLimit:", err);
-          return CONSTANTS.DEFAULT_LIMIT;
-        }
-      },
+          return state.extension?.entry?._changedData?.location || [];
+        } catch (err) { return []; }
+      }
     };
 
-    // ============================================
-    // DATA MANAGEMENT
-    // ============================================
     const dataManager = {
-      /**
-       * Restores saved field data and initializes state
-       */
       async restoreSavedData() {
-        const savedFieldData = await state.extension.field.getData();
-
-        if (!Array.isArray(savedFieldData) || savedFieldData.length === 0) {
-          return;
-        }
-
-        const firstItem = savedFieldData[0];
-
-        if (typeof firstItem === "object") {
-          if (firstItem.sku) {
-            // Product objects
-            state.latestProductsCache = savedFieldData;
-            state.selectedValues = savedFieldData.map((p) => p.sku);
-          } else if (firstItem.code) {
-            // Category objects
-            state.categoryObjectsCache = savedFieldData;
-            state.selectedValues = savedFieldData.map((c) => c.code);
-          }
-        } else {
-          state.selectedValues = savedFieldData;
-        }
+        const saved = await state.extension.field.getData();
+        if (!Array.isArray(saved) || saved.length === 0) return;
+        state.selectedValues = (typeof saved[0] === "object") ? saved.map(i => i.sku || i.code) : saved;
+        if (state.isProductField) state.latestProductsCache = saved;
       },
-
-      /**
-       * Saves data to extension field
-       * @param {*} data - Data to save
-       */
       async saveData(data) {
         await state.extension.field.setData(data);
         utils.updateHeight();
       },
-
-      /**
-       * Removes item from selection
-       * @param {number} index - Index to remove
-       */
       async removeItem(index) {
-        const { isProductField, selectedValues, latestProductsCache } = state;
-
-        const selectionLimit = await utils.getSelectionLimit();
-
-
-        const value = selectedValues[index];
-
-        selectedValues.splice(index, 1);
-
-        if (isProductField) {
-          state.latestProductsCache = latestProductsCache.filter(
-            (p) => p.sku !== value
-          );
-          // Only check limit if it's not null (unlimited)
-          if (isProductField && selectionLimit !== null && selectedValues.length >= selectionLimit) {
-            elements.statusMessage.innerText = `You can only select up to ${selectionLimit} products.`;
-            utils.updateHeight();
-          } else {
-            elements.statusMessage.innerText = ``;
-          }
-          await dataManager.saveData(state.latestProductsCache);
+        const value = state.selectedValues[index];
+        state.selectedValues.splice(index, 1);
+        if (state.isProductField) {
+          state.latestProductsCache = state.latestProductsCache.filter(p => p.sku !== value);
+          await this.saveData(state.latestProductsCache);
           renderer.renderSelectedTable();
-          validator.validateProductAvailability();
         } else {
-          await dataManager.saveData(selectedValues);
+          await this.saveData(state.selectedValues);
           renderer.renderChips();
         }
-      },
+      }
     };
 
-    // ============================================
-    // API HANDLING
-    // ============================================
     const api = {
-      /**
-       * Fetches search results from API
-       * @param {string} query - Search query
-       * @param {number} page - Page number
-       * @param {boolean} append - Whether to append to existing results
-       */
       async fetchResults(query, page = 1, append = false) {
         if (state.isLoading) return;
-
-        // Cancel any previous request
-        if (state.abortController) {
-          state.abortController.abort();
-        }
-
-        // Create new AbortController for this request
+        if (state.abortController) state.abortController.abort();
         state.abortController = new AbortController();
-        const signal = state.abortController.signal;
-
+        
         state.isLoading = true;
         elements.loader.style.display = "block";
-        elements.statusMessage.innerText = "";
-
-        const paramName = state.isProductField ? "sku" : "code";
-        const fullUrl = `${state.apiUrl}?${paramName}=${encodeURIComponent(
-          query
-        )}&currentPage=${page}&perPage=${state.perPage}`;
-
+        
+        const param = state.isProductField ? "sku" : "code";
+        const url = `${state.apiUrl}?${param}=${encodeURIComponent(query)}&currentPage=${page}&perPage=${state.perPage}`;
+        
         try {
-          const response = await fetch(fullUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: state.encodedAuth,
-            },
-            signal: signal, // Add abort signal
+          const res = await fetch(url, { 
+            headers: { Authorization: state.encodedAuth }, 
+            signal: state.abortController.signal 
           });
-
-          const data = await response.json();
-
-          // Check if we should still show results (list might have been closed)
-          if (!state.shouldShowResults) {
-            return;
+          const data = await res.json();
+          
+          if (state.shouldShowResults && data.success) {
+            state.currentPage = page;
+            state.totalResults = data.total || 0;
+            state.resultsCache = append ? [...state.resultsCache, ...data.data] : data.data;
+            renderer.renderSearchResults(state.resultsCache);
           }
-
-          if (data.success && Array.isArray(data.data)) {
-            state.totalResults = data.total || data.data.length;
-            state.perPage = data.perPage || CONSTANTS.DEFAULT_PER_PAGE;
-            state.currentPage = data.currentPage || page;
-
-            if (append) {
-              console.log("append", append);
-              state.resultsCache = [...state.resultsCache, ...data.data];
-              console.log("state.resultsCache", state.resultsCache);
-            } else {
-              console.log("else part");
-              state.resultsCache = data.data;
-              console.log("state.resultsCache", state.resultsCache);
-            }
-
-            // Only render if we should show results
-            if (state.shouldShowResults) {
-              renderer.renderSearchResults(state.resultsCache);
-            }
-          } else {
-            const errorMsg =
-              data?.error?.message ||
-              data?.message ||
-              "Something went wrong while fetching data.";
-            elements.statusMessage.innerText = errorMsg;
-            if (state.shouldShowResults) {
-              renderer.renderSearchResults([]);
-            }
-          }
-        } catch (error) {
-          // Ignore abort errors (they're expected when cancelling)
-          if (error.name === 'AbortError') {
-            console.log("Request cancelled");
-            return;
-          }
-          console.error("❌ API Error:", error);
-          if (state.shouldShowResults) {
-            elements.statusMessage.innerText = `❌ ${error.message || "Network error occurred."
-              }`;
-            renderer.renderSearchResults([]);
-          }
-        } finally {
-          state.isLoading = false;
-          elements.loader.style.display = "none";
+        } catch (e) { 
+          if (e.name !== 'AbortError') console.error(e); 
+        } finally { 
+          state.isLoading = false; 
+          elements.loader.style.display = "none"; 
         }
-      },
+      }
     };
 
-    // ============================================
-    // RENDERING
-    // ============================================
     const renderer = {
-      /**
-       * Renders search results list
-       * @param {Array} data - Results data
-       */
       renderSearchResults(data = []) {
-        if (!Array.isArray(data)) return;
-
         elements.resultsList.innerHTML = "";
-
-        if (data.length > 0) {
-          elements.resultsList.classList.add("has-results");
-        } else {
-          elements.resultsList.classList.remove("has-results");
-        }
-
-        data.forEach((item) => {
-          const displayValue = renderer.getDisplayValue(item);
+        elements.resultsList.classList.toggle("has-results", data.length > 0);
+        data.forEach(item => {
           const li = document.createElement("li");
-          li.innerText = displayValue;
-          li.onclick = () => renderer.handleItemSelection(item);
+          
+          let dropdownDisplay;
+          if (state.isProductField) {
+            dropdownDisplay = item.sku;
+          } else if (state.isCustomerField) {
+            // FORMAT: code [name] for dropdown list
+            dropdownDisplay = `${item.code} [${item.name || 'N/A'}]`;
+          } else if (state.config.field_type === "category") {
+            dropdownDisplay = item.name || item.code;
+          } else {
+            dropdownDisplay = item.code;
+          }
+          
+          li.innerText = dropdownDisplay;
+          li.onclick = () => this.handleSelection(item);
           elements.resultsList.appendChild(li);
         });
-
         utils.updateHeight();
       },
-
-      /**
-       * Gets display value for an item
-       * @param {Object} item - Item object
-       * @returns {string} Display value
-       */
-      getDisplayValue(item) {
-        const { isProductField, categoryField } = state;
-
-        if (isProductField) return item.sku;
-        if (categoryField.toLowerCase() === "category") return item.name;
-        return item.code;
-      },
-
-      /**
-       * Handles item selection from search results
-       * @param {Object} item - Selected item
-       */
-      async handleItemSelection(item) {
-        const { isProductField, selectedValues } = state;
-        // console.log('state', state);
-        const value = isProductField ? item.sku : item.code;
-        const selectionLimit = await utils.getSelectionLimit();
-
-
-        if (selectedValues.includes(value)) {
-          // Already selected - cancel requests and close the list
-          elements.statusMessage.innerText = "item already exists";
-          utils.updateHeight();
-          utils.clearStatusMessageAfterDelay();
-          utils.closeSearchDropdown();
-          return;
-        }
-        // Check selection limit for products (only if limit is not null/unlimited)
-        if (isProductField && selectionLimit !== null && selectedValues.length >= selectionLimit) {
-          elements.statusMessage.innerText = `You can only select up to ${selectionLimit} products.`;
-          utils.updateHeight();
-          utils.clearStatusMessageAfterDelay();
-          utils.closeSearchDropdown();
-          return;
-        }
-
-        selectedValues.push(value);
-
-        if (isProductField) {
+      async handleSelection(item) {
+        // Selection only saves the 'code' or 'sku' string
+        const val = state.isProductField ? item.sku : item.code;
+        if (state.selectedValues.includes(val)) return utils.closeSearchDropdown();
+        
+        state.selectedValues.push(val);
+        if (state.isProductField) {
           state.latestProductsCache.push(item);
           await dataManager.saveData(state.latestProductsCache);
-          renderer.renderSelectedTable();
-          validator.validateProductAvailability();
-        } else if (state.categoryField.toLowerCase() === "category") {
-          state.categoryObjectsCache.push(item);
-          await dataManager.saveData(state.categoryObjectsCache);
-          renderer.renderChips();
+          this.renderSelectedTable();
         } else {
-          await dataManager.saveData(selectedValues);
+          await dataManager.saveData(state.selectedValues);
           renderer.renderChips();
-          if (state.isLocationField) {
-            // console.log("validateProductAvailability");
-            // console.log("state.isLocationField", state.isLocationField);
-            // console.log("validator.validateProductAvailability", validator.validateProductAvailability);
-            validator.validateProductAvailability();
-          }
         }
-
         utils.closeSearchDropdown();
       },
-
-      /**
-       * Renders selected items as chips
-       */
       renderChips() {
         elements.chipsContainer.innerHTML = "";
-
-        if (state.isProductField) {
-          renderer.renderSelectedTable();
-          return;
-        }
-
-        state.selectedValues.forEach((code, index) => {
+        state.selectedValues.forEach((v, i) => {
           const chip = document.createElement("div");
           chip.className = "tag";
-          chip.innerText = code;
-
-          const removeBtn = document.createElement("span");
-          removeBtn.className = "remove";
-          removeBtn.innerText = "×";
-          removeBtn.onclick = () => dataManager.removeItem(index);
-
-          chip.appendChild(removeBtn);
+          // Chips only show the code
+          chip.innerHTML = `${v} <span class="remove" onclick="dataManager.removeItem(${i})">×</span>`;
           elements.chipsContainer.appendChild(chip);
         });
-
         utils.updateHeight();
       },
-
-      /**
-       * Renders selected products table
-       */
       renderSelectedTable() {
         elements.selectedTableDiv.innerHTML = "";
-
-        if (!state.isProductField || state.selectedValues.length === 0) {
-          return;
-        }
-
-        // Create table header wrapper with refresh button
-        const headerWrapper = document.createElement("div");
-        headerWrapper.className = "table-header-wrapper";
-
-        const tableTitle = document.createElement("h3");
-        tableTitle.innerText = "Selected Products";
-        tableTitle.style.margin = "0";
-        tableTitle.style.fontSize = "16px";
-
-        const refreshButton = document.createElement("button");
-        refreshButton.className = "refresh-button";
-        refreshButton.innerHTML = `
-          <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          Refresh
-        `;
-        refreshButton.onclick = () => renderer.refreshTable();
-
-        headerWrapper.appendChild(tableTitle);
-        headerWrapper.appendChild(refreshButton);
-        elements.selectedTableDiv.appendChild(headerWrapper);
-
-        const table = document.createElement("table");
-        const header = document.createElement("tr");
-
-        ["Order", "Product", "Not Available At", "Action"].forEach(
-          (headerText) => {
-            const th = document.createElement("th");
-            th.innerText = headerText;
-            header.appendChild(th);
-          }
-        );
-
-        table.appendChild(header);
-
-        const location = utils.getSelectedLocation();
-        const selectedLocations = utils.normalizeToArray(location);
-
-        state.selectedValues.forEach((sku, index) => {
-          const row = renderer.createTableRow(sku, index, selectedLocations);
-          table.appendChild(row);
+        if (!state.isProductField || state.selectedValues.length === 0) return;
+        
+        const loc = utils.normalizeToArray(utils.getSelectedLocation());
+        let html = `<div class="table-header-wrapper"><h3>Selected Products</h3><button class="refresh-button" onclick="renderer.renderSelectedTable()">Refresh</button></div>`;
+        html += `<table><tr><th>Order</th><th>Product</th><th>Not Available At</th><th>Action</th></tr>`;
+        
+        state.selectedValues.forEach((sku, i) => {
+          const product = state.latestProductsCache.find(p => p.sku === sku);
+          const productLocs = product ? utils.normalizeToArray(product.locations) : [];
+          const unavailable = loc.filter(l => !productLocs.includes(l));
+          const color = unavailable.length > 0 ? 'red' : 'inherit';
+          
+          html += `<tr>
+            <td>${i+1}</td>
+            <td style="color:${color}">${sku}</td>
+            <td>${unavailable.join(', ')}</td>
+            <td><span style="color:red;cursor:pointer" onclick="dataManager.removeItem(${i})">Remove</span></td>
+          </tr>`;
         });
-
-        elements.selectedTableDiv.appendChild(table);
+        elements.selectedTableDiv.innerHTML = html + `</table>`;
         utils.updateHeight();
-      },
-
-      /**
-       * Refreshes the table with all mapping functionality
-       */
-      refreshTable() {
-        // Re-render the table
-        renderer.renderSelectedTable();
-        
-        // Re-validate product availability
-        validator.validateProductAvailability();
-        
-        console.log("Table refreshed");
-      },
-
-      /**
-       * Creates a table row for a product
-       * @param {string} sku - Product SKU
-       * @param {number} index - Row index
-       * @param {Array} selectedLocations - Selected locations
-       * @returns {HTMLElement} Table row element
-       */
-      createTableRow(sku, index, selectedLocations) {
-        const row = document.createElement("tr");
-
-        // Order cell
-        const orderCell = document.createElement("td");
-        orderCell.innerText = index + 1;
-        row.appendChild(orderCell);
-
-        // Product cell
-        const productCell = document.createElement("td");
-        productCell.innerText = sku;
-        const product = state.latestProductsCache.find((p) => p.sku === sku);
-
-        let unavailableAt = [];
-        if (product) {
-          const productLocations = utils.normalizeToArray(product.locations);
-          unavailableAt =
-            selectedLocations.length > 0
-              ? selectedLocations.filter(
-                (loc) => !productLocations.includes(loc)
-              )
-              : [];
-        }
-
-        if (unavailableAt.length > 0) {
-          productCell.style.color = "red";
-        }
-        row.appendChild(productCell);
-
-        // Not Available cell
-        const notAvailableCell = document.createElement("td");
-        notAvailableCell.innerText =
-          unavailableAt.length > 0 ? unavailableAt.join(", ") : "";
-        row.appendChild(notAvailableCell);
-
-        // Action cell
-        const actionCell = document.createElement("td");
-        const removeBtn = document.createElement("span");
-        removeBtn.innerText = "Remove";
-        removeBtn.style.cursor = "pointer";
-        removeBtn.style.color = "red";
-        removeBtn.onclick = () => dataManager.removeItem(index);
-        actionCell.appendChild(removeBtn);
-        row.appendChild(actionCell);
-
-        return row;
-      },
+      }
     };
 
-    // ============================================
-    // VALIDATION
-    // ============================================
-    const validator = {
-      /**
-       * Validates product availability based on location
-       */
-      validateProductAvailability() {
-        if ((!state.isProductField && !state.isLocationField) || state.selectedValues.length === 0) {
-          elements.statusMessage.innerText = "";
-          return;
-        }
-
-        // console.log("validateProductAvailability");
-        // console.log("state.isProductField", state.isProductField);
-        // console.log("state.isLocationField", state.isLocationField);
-        // console.log("state.selectedValues", state.selectedValues);
-        // console.log("utils.getSelectedLocation", utils.getSelectedLocation());
-        // console.log("renderer.renderSelectedTable", renderer.renderSelectedTable);
-        // console.log("validator.validateProductAvailability", validator.validateProductAvailability);
-        const location = utils.getSelectedLocation();
-        // console.log("location", location);
-        if (!location || location.length === 0) {
-          elements.statusMessage.innerText = "";
-          // console.log("location is empty");
-          renderer.renderSelectedTable();
-          return;
-        }
-        // console.log("location is not empty");
-        renderer.renderSelectedTable();
-      },
-    };
-
-    // ============================================
-    // EVENT HANDLERS
-    // ============================================
     const eventHandlers = {
-      /**
-       * Initializes search input event listener
-       */
       initSearchInput() {
-        elements.searchInput.addEventListener("input", function () {
+        elements.searchInput.addEventListener("input", () => {
           const query = elements.searchInput.value.toLowerCase().trim();
-
-          // Clear UI
           elements.resultsList.innerHTML = "";
-          elements.resultsList.classList.remove("has-results");
           elements.statusMessage.innerText = "";
-          elements.loader.style.display = "none";
-
-          // Clear previous timer
           clearTimeout(state.searchDebounceTimer);
-
-          if (!query) {
-            // Reset flag when search is cleared
-            state.shouldShowResults = true;
-            return;
+          
+          if (!query) return (state.shouldShowResults = true);
+          
+          if (state.isCustomerField && query.length < 2) {
+            elements.statusMessage.innerText = "Minimum 2 characters for customers.";
+            return utils.updateHeight();
           }
-
-          // Reset flag to allow results to show for new search
+          if (state.isProductField && query.length < 4) {
+            elements.statusMessage.innerText = "Minimum 4 characters for products.";
+            return utils.updateHeight();
+          }
+          
           state.shouldShowResults = true;
-
-          // Debounce search
           state.searchDebounceTimer = setTimeout(() => {
             state.lastQuery = query;
-            state.currentPage = 1;
-            state.totalResults = 0;
             api.fetchResults(query, 1, false);
           }, CONSTANTS.SEARCH_DEBOUNCE_MS);
         });
       },
-
-      /**
-       * Initializes infinite scroll
-       */
       initInfiniteScroll() {
-        elements.resultsList.addEventListener("scroll", function () {
-          const { scrollTop, clientHeight, scrollHeight } =
-            elements.resultsList;
-
-          if (
-            scrollTop + clientHeight >= scrollHeight - CONSTANTS.SCROLL_THRESHOLD &&
-            !state.isLoading &&
-            state.resultsCache.length < state.totalResults
-          ) {
+        elements.resultsList.addEventListener("scroll", () => {
+          const { scrollTop, clientHeight, scrollHeight } = elements.resultsList;
+          if (scrollTop + clientHeight >= scrollHeight - CONSTANTS.SCROLL_THRESHOLD && 
+              !state.isLoading && state.resultsCache.length < state.totalResults) {
             api.fetchResults(state.lastQuery, state.currentPage + 1, true);
           }
         });
       },
-
-      /**
-       * Initializes search wrapper click handler
-       */
       initSearchWrapper() {
-        elements.searchWrapper.addEventListener("click", () => {
-          elements.searchInput.focus();
-        });
-      },
+        elements.searchWrapper.addEventListener("click", () => elements.searchInput.focus());
+      }
     };
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    const init = {
-      /**
-       * Initializes DOM elements
-       */
-      initializeElements() {
-        elements.statusMessage = document.getElementById("status-message");
-        elements.searchInput = document.getElementById("search");
-        elements.resultsList = document.getElementById("results");
-        elements.chipsContainer = document.getElementById("chips-container");
-        elements.selectedTableDiv = document.getElementById("selected-table");
-        elements.searchWrapper = document.getElementById("search-wrapper");
-        elements.loader = document.getElementById("loader");
-      },
+    ContentstackUIExtension.init().then(ext => {
+      state.extension = ext;
+      elements.statusMessage = document.getElementById("status-message");
+      elements.searchInput = document.getElementById("search");
+      elements.resultsList = document.getElementById("results");
+      elements.chipsContainer = document.getElementById("chips-container");
+      elements.selectedTableDiv = document.getElementById("selected-table");
+      elements.loader = document.getElementById("loader");
+      elements.searchWrapper = document.getElementById("search-wrapper");
+      
+      state.config = ext.field.schema.config || {};
+      state.apiUrl = state.config.api_url;
+      const dName = ext.field.schema.display_name.toLowerCase();
+      state.isProductField = dName.includes("product");
+      state.isCustomerField = dName.includes("customer");
+      state.isLocationField = dName.includes("location");
+      state.encodedAuth = utils.generateAuthToken(ext.config.management_token);
 
-      /**
-       * Initializes configuration
-       */
-      initializeConfig() {
-        // console.log("initializeConfig");
-        const { extension } = state;
-        // console.log("extension", extension);
-        state.config = extension.field.schema.config || {};
-        state.extConfig = extension.config || {};
-        state.managementToken = state.extConfig.management_token || "";
-        state.apiUrl = state.config.api_url;
-        state.isProductField = extension.field.schema.display_name
-          .toLowerCase()
-          .includes("product");
-        state.isLocationField = extension.field.schema.display_name
-          .toLowerCase()
-          .includes("location");
-        // console.log("state.isLocationField", state.isLocationField);
-        state.categoryField = state.config.field_type || "";
-
-        if (!state.apiUrl) {
-          elements.statusMessage.innerText =
-            "Configuration Error: 'api_url' is missing in field config.";
-          utils.updateHeight();
-          throw new Error("Missing api_url configuration");
-        }
-
-        state.encodedAuth = utils.generateAuthToken(state.managementToken);
-      },
-
-      /**
-       * Initializes event listeners
-       */
-      initializeEventListeners() {
+      dataManager.restoreSavedData().then(() => {
+        renderer.renderChips();
+        renderer.renderSelectedTable();
         eventHandlers.initSearchInput();
         eventHandlers.initInfiniteScroll();
         eventHandlers.initSearchWrapper();
-      },
-
-      /**
-       * Initializes location field listener (if available)
-       */
-      initializeLocationListener() {
-        try {
-          // console.log("initializeLocationListener");
-          const locationField = state.extension.entry.getField("location");
-
-          if (locationField) {
-            // console.log("locationField", locationField);
-            console.log("locationField.onValueChanged", locationField.onValueChanged);
-            // Location listener can be enabled here if needed
-            // locationField.onValueChanged(async (newValue) => {
-            //   validator.validateProductAvailability();
-            // });
-          } else {
-            console.warn(
-              "⚠️ Location field not found or onValueChanged unavailable."
-            );
-          }
-        } catch (err) {
-          console.error("Error initializing location listener:", err);
-        }
-      },
-
-      /**
-       * Main initialization function
-       */
-      async initialize() {
-        try {
-          // Initialize extension
-          state.extension = await ContentstackUIExtension.init();
-          console.log("🧩 Extension initialized:", state.extension);
-
-          // Initialize DOM elements
-          init.initializeElements();
-
-          // Initialize configuration
-          init.initializeConfig();
-
-          // Restore saved data
-          await dataManager.restoreSavedData();
-
-          // Initial render
-          renderer.renderChips();
-          renderer.renderSelectedTable();
-          validator.validateProductAvailability();
-
-          // Initialize event listeners
-          init.initializeEventListeners();
-          init.initializeLocationListener();
-
-          // Update height
-          utils.updateHeight();
-        } catch (error) {
-          console.error("❌ Initialization error:", error);
-          if (elements.statusMessage) {
-            elements.statusMessage.innerText = `Initialization failed: ${error.message}`;
-          }
-        }
-      },
-    };
-
-    // ============================================
-    // START APPLICATION
-    // ============================================
-    init.initialize();
+        utils.updateHeight();
+      });
+    });
   </script>
 </body>
-
 </html>
